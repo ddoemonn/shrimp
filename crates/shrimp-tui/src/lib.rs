@@ -180,10 +180,18 @@ impl App {
     }
 }
 
-fn provider_entries() -> Vec<(ProviderKind, &'static str, &'static str)> {
+fn provider_entries(config: &ShrimpConfig) -> Vec<(ProviderKind, &'static str, String)> {
     vec![
-        (ProviderKind::Ollama, "Ollama", "http://localhost:11434"),
-        (ProviderKind::LmStudio, "LM Studio", "http://localhost:1234"),
+        (
+            ProviderKind::Ollama,
+            "Ollama",
+            ProviderKind::Ollama.resolve_base_url(Some(&config.base_url)),
+        ),
+        (
+            ProviderKind::LmStudio,
+            "LM Studio",
+            ProviderKind::LmStudio.resolve_base_url(Some(&config.base_url)),
+        ),
     ]
 }
 
@@ -358,7 +366,7 @@ fn handle_key(app: &mut App, code: KeyCode, modifiers: KeyModifiers) {
 }
 
 fn handle_provider_key(app: &mut App, code: KeyCode) {
-    let count = provider_entries().len();
+    let count = provider_entries(&app.config).len();
     match code {
         KeyCode::Up | KeyCode::Char('k') => {
             if app.provider_cursor > 0 {
@@ -371,7 +379,7 @@ fn handle_provider_key(app: &mut App, code: KeyCode) {
             }
         }
         KeyCode::Enter => {
-            let entries = provider_entries();
+            let entries = provider_entries(&app.config);
             let (kind, _, url) = &entries[app.provider_cursor];
             app.config.provider = kind.clone();
             app.config.base_url = url.to_string();
@@ -1243,7 +1251,7 @@ fn render_provider(f: &mut Frame, app: &App) {
     let inner = block.inner(area);
     f.render_widget(block, area);
 
-    let entries = provider_entries();
+    let entries = provider_entries(&app.config);
     let mut lines: Vec<Line> = vec![Line::from(""), Line::from("  Select a provider:")];
 
     for (i, (_, name, url)) in entries.iter().enumerate() {
