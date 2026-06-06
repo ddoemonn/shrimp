@@ -37,7 +37,54 @@ impl ProviderKind {
             ProviderKind::LmStudio => "LM Studio",
         }
     }
+
+    pub fn resolve_base_url(&self, custom_url: Option<&str>) -> String {
+        if let Some(url) = custom_url {
+            let trimmed = url.trim();
+            if !trimmed.is_empty() && trimmed != self.default_base_url() {
+                return normalize_url(trimmed);
+            }
+        }
+
+        match self {
+            ProviderKind::Ollama => {
+                if let Ok(env_val) = std::env::var("OLLAMA_HOST") {
+                    if !env_val.trim().is_empty() {
+                        return normalize_url(&env_val);
+                    }
+                }
+            }
+            ProviderKind::LmStudio => {
+                if let Ok(env_val) = std::env::var("LM_STUDIO_HOST") {
+                    if !env_val.trim().is_empty() {
+                        return normalize_url(&env_val);
+                    }
+                }
+            }
+        }
+
+        if let Some(url) = custom_url {
+            let trimmed = url.trim();
+            if !trimmed.is_empty() {
+                return normalize_url(trimmed);
+            }
+        }
+        self.default_base_url().to_string()
+    }
 }
+
+pub fn normalize_url(url: &str) -> String {
+    let trimmed = url.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+    if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+        trimmed.to_string()
+    } else {
+        format!("http://{}", trimmed)
+    }
+}
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProviderConfig {
@@ -261,3 +308,70 @@ pub async fn list_models(config: &ProviderConfig) -> Result<Vec<ModelInfo>, Prov
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_url() {
+        assert_eq!(normalize_url("hub:11434"), "http://hub:11434");
+        assert_eq!(normalize_url("http://hub:11434"), "http://hub:11434");
+        assert_eq!(normalize_url("https://hub:11434"), "https://hub:11434");
+        assert_eq!(normalize_url("   127.0.0.1:1234  "), "http://127.0.0.1:1234");
+        assert_eq!(normalize_url(""), "");
+    }
+
+    #[test]
+    fn test_resolve_base_url() {
+        // Setup environments
+        std::env::remove_var("OLLAMA_HOST");
+        std::env::remove_var("LM_STUDIO_HOST");
+
+        // 1. If custom_url is explicitly set and different from default, use it.
+        assert_eq!(
+            ProviderKind::Ollama.resolve_base_url(Some("http://hub:11434")),
+            "http://hub:11434"
+        );
+        assert_eq!(
+            ProviderKind::LmStudio.resolve_base_url(Some("http://hub:1234")),
+            "http://hub:1234"
+        );
+
+        // 2. If custom_url is the default (or none), and environment var is set, use the env var.
+        std::env::set_var("OLLAMA_HOST", "my-ollama:11434");
+        std::env::set_var("LM_STUDIO_HOST", "my-lmstudio:1234");
+
+        assert_eq!(
+            ProviderKind::Ollama.resolve_base_url(None),
+            "http://my-ollama:11434"
+        );
+        assert_eq!(
+            ProviderKind::Ollama.resolve_base_url(Some("http://localhost:11434")),
+            "http://my-ollama:11434"
+        );
+        assert_eq!(
+            ProviderKind::LmStudio.resolve_base_url(None),
+            "http://my-lmstudio:1234"
+        );
+        assert_eq!(
+            ProviderKind::LmStudio.resolve_base_url(Some("http://localhost:1234")),
+            "http://my-lmstudio:1234"
+        );
+
+        // Cleanup
+        std::env::remove_var("OLLAMA_HOST");
+        std::env::remove_var("LM_STUDIO_HOST");
+
+        // 3. Fallback to default
+        assert_eq!(
+            ProviderKind::Ollama.resolve_base_url(None),
+            "http://localhost:11434"
+        );
+        assert_eq!(
+            ProviderKind::LmStudio.resolve_base_url(None),
+            "http://localhost:1234"
+        );
+    }
+}
+

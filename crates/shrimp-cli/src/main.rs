@@ -50,6 +50,7 @@ fn parse_provider(s: &str) -> ProviderKind {
 }
 
 fn apply_overrides(cfg: &mut ShrimpConfig, cli: &Cli) {
+    let old_provider = cfg.provider.clone();
     if let Some(p) = &cli.provider {
         cfg.provider = parse_provider(p);
     }
@@ -57,7 +58,9 @@ fn apply_overrides(cfg: &mut ShrimpConfig, cli: &Cli) {
         cfg.model = m.clone();
     }
     if let Some(u) = &cli.base_url {
-        cfg.base_url = u.clone();
+        cfg.base_url = cfg.provider.resolve_base_url(Some(u));
+    } else if cfg.provider != old_provider {
+        cfg.base_url = cfg.provider.resolve_base_url(None);
     }
 }
 
@@ -137,22 +140,15 @@ async fn main() -> Result<()> {
             println!("base_url : {}", cfg.base_url);
         }
 
-        Some(Commands::Run { prompt, repo }) => {
-            let abs = repo.canonicalize().unwrap_or(repo);
+        Some(Commands::Run { ref prompt, ref repo }) => {
+            let abs = repo.canonicalize().unwrap_or(repo.clone());
             let mut cfg = ShrimpConfig::load(&abs);
             cfg.repo_root = abs;
             cfg.auto_approve = true;
-            if let Some(p) = &cli.provider {
-                cfg.provider = parse_provider(p);
-            }
-            if let Some(m) = &cli.model {
-                cfg.model = m.clone();
-            }
-            if let Some(u) = &cli.base_url {
-                cfg.base_url = u.clone();
-            }
-            run_headless(&prompt, cfg)?;
+            apply_overrides(&mut cfg, &cli);
+            run_headless(prompt, cfg)?;
         }
+
 
         None => {
             let abs = cli.repo.canonicalize().unwrap_or(cli.repo.clone());
