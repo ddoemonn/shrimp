@@ -1,0 +1,11 @@
+[package]
+name = "shrimp-retrieval"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ignore = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+shrimp-index = { workspace = true }

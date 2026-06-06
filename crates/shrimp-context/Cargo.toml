@@ -1,0 +1,9 @@
+[package]
+name = "shrimp-context"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { workspace = true }
+shrimp-index = { workspace = true }
+shrimp-retrieval = { workspace = true }

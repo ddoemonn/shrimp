@@ -1,0 +1,18 @@
+[package]
+name = "shrimp-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "shrimp"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+crossbeam-channel = { workspace = true }
+tokio = { workspace = true }
+shrimp-core = { workspace = true }
+shrimp-provider = { workspace = true }
+shrimp-tui = { workspace = true }
+shrimp-index = { workspace = true }
