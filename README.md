@@ -1,6 +1,6 @@
 # shrimp
 
-Coding agent for Ollama and LM Studio.
+Coding agent for local LLMs. Ollama & LM Studio. Tree-sitter indexing, streaming TUI
 
 <img width="800" height="536" alt="ScreenRecording2026-06-06at16 57 20-ezgif com-video-to-gif-converter" src="https://github.com/user-attachments/assets/66a964b0-cbf3-4235-b5c6-711191522135" />
 
