@@ -27,7 +27,7 @@ shrimp run -P "create hello.py" # one-shot prompt, no TUI
 shrimp index                    # index the current repo
 ```
 
-Providers: **Ollama** at `localhost:11434`, **LM Studio** at `localhost:1234`.
+Providers: **Ollama** at `localhost:11434` (configurable via `OLLAMA_HOST` environment variable), **LM Studio** at `localhost:1234` (configurable via `LM_STUDIO_HOST` environment variable).
 
 | key | action |
 | --- | --- |
@@ -45,10 +45,14 @@ Settings live in `.shrimp/config.toml`. Every field is optional.
 
 ```toml
 provider = "ollama"
+base_url = "http://hub:11434" # custom base URL (optional)
 model = "gemma4:12b"
 auto_approve = true
 max_context_tokens = 8192
 ```
+
+You can also override the base URL via the `SHRIMP_BASE_URL` environment variable or the `--base-url` CLI parameter.
+
 
 ## Crates
 
