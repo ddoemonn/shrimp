@@ -49,7 +49,3 @@ model = "gemma4:12b"
 auto_approve = true
 max_context_tokens = 8192
 ```
-
-## Crates
-
-`shrimp-index`, `shrimp-retrieval`, `shrimp-provider`, `shrimp-context`, `shrimp-tools`, `shrimp-core`, `shrimp-tui`, `shrimp-cli`
